@@ -1,0 +1,39 @@
+#include <winver.h>
+
+101 ICON "app_bw.ico"
+102 ICON "app.ico"
+103 ICON "app_white.ico"
+104 ICON "app_purple.ico"
+105 ICON "app_yellow.ico"
+106 ICON "app_red.ico"
+107 ICON "app_green.ico"
+108 ICON "app_pink.ico"
+1 RT_MANIFEST "app.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE 0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", "FleetwayLOL"
+      VALUE "FileDescription", "Graphite — Portable Text & Note Editor"
+      VALUE "FileVersion", "1.0.0.0"
+      VALUE "InternalName", "Graphite"
+      VALUE "OriginalFilename", "Graphite.exe"
+      VALUE "ProductName", "Graphite"
+      VALUE "ProductVersion", "1.0.0.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 1200
+  END
+END

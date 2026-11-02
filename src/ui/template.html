@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark" data-material="blur" data-accent="sapphire" data-scene="web_galaxy">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graphite</title>
+  <link rel="icon" id="appFavicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='%230067c0'/%3E%3Crect x='15' y='14' width='34' height='36' rx='7' fill='rgba(255,255,255,0.22)' stroke='rgba(255,255,255,0.75)' stroke-width='1.5'/%3E%3Cpath d='M22 25h20M22 33h16M22 41h11' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <style>/*__INLINE_CSS__*/</style>
+</head>
+<body>
+  <!-- HD Wallpaper & Blur Stage -->
+  <div class="desktop-backdrop" id="desktopBackdrop">
+    <canvas class="wallpaper-canvas" id="bgWallpaperCanvas" width="1600" height="900"></canvas>
+    <div class="desktop-wallpaper" id="desktopWallpaper"></div>
+  </div>
+
+  <!-- 8-direction invisible resize ring for frameless Windows .EXE -->
+  <div class="win-resize-ring" id="winResizeRing">
+    <div class="rz-edge rz-n" data-rz="n"></div>
+    <div class="rz-edge rz-s" data-rz="s"></div>
+    <div class="rz-edge rz-w" data-rz="w"></div>
+    <div class="rz-edge rz-e" data-rz="e"></div>
+    <div class="rz-edge rz-nw" data-rz="nw"></div>
+    <div class="rz-edge rz-ne" data-rz="ne"></div>
+    <div class="rz-edge rz-sw" data-rz="sw"></div>
+    <div class="rz-edge rz-se" data-rz="se"></div>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Clean Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="search-box">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Поиск..." autocomplete="off" />
+          <button type="button" class="search-clear" id="btnClearSearch">✕</button>
+        </div>
+        <button type="button" class="plain-icon-btn" id="btnNewNoteSidebar" data-i18n-title="newNoteTip" title="Новая заметка">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+
+      <div class="folders-block">
+        <div class="folders-header">
+          <span data-i18n="foldersHeader">Папки</span>
+          <button type="button" id="btnToggleNewFolder" data-i18n-title="addFolderTip" title="Новая папка">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="folders-list" id="foldersList"></div>
+        <div class="new-folder-inline" id="newFolderBox">
+          <input type="text" id="newFolderInput" data-i18n-placeholder="folderNamePlaceholder" placeholder="Название..." maxlength="26" />
+          <button type="button" id="btnCreateFolder" data-i18n="okBtn">ОК</button>
+        </div>
+      </div>
+
+      <div class="notes-list" id="notesList"></div>
+    </aside>
+
+    <!-- Main Notepad Pane -->
+    <main class="main-pane">
+      <!-- Row 1: Unified Custom Titlebar + Tab Bar -->
+      <header class="tabbar" id="customTitlebar">
+        <div class="tabbar-left">
+          <span class="win-app-mark" id="winAppMark" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 64 64"><rect x="1" y="1" width="62" height="62" rx="11" fill="#181b20" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+          </span>
+
+          <button type="button" class="plain-icon-btn" id="btnToggleSidebar" data-i18n-title="sidebarTip" title="Боковая панель">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+          </button>
+
+          <div class="tabs-scroll" id="tabsStrip"></div>
+
+          <button type="button" class="plain-icon-btn" id="btnNewTab" data-i18n-title="newTabTip" title="Новая вкладка" style="width:26px;height:26px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+
+        <div class="titlebar-drag-zone" id="titlebarDragZone"></div>
+
+        <div class="tabbar-right">
+          <button type="button" class="quiet-lang-btn" id="btnQuickLang" title="Русский / English">RU</button>
+          <button type="button" class="plain-icon-btn" id="btnQuickTheme" data-i18n-title="themeToggleTip" title="Тема">
+            <span id="themeIconWrap" style="display:inline-flex"></span>
+          </button>
+          <button type="button" class="plain-icon-btn" id="btnOpenSettings" data-i18n-title="settingsTip" title="Параметры">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+
+          <!-- Custom Sleek Window Caption Controls (Native .EXE) -->
+          <div class="win-caption-controls">
+            <button type="button" class="win-cap-btn" id="btnWinMin" data-i18n-title="winMinTip" title="Свернуть">
+              <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" stroke-width="1.2"/></svg>
+            </button>
+            <button type="button" class="win-cap-btn" id="btnWinMax" data-i18n-title="winMaxTip" title="Развернуть">
+              <span id="winMaxIconWrap" style="display:inline-flex">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1.2" y="1.2" width="7.6" height="7.6" rx="1.2" stroke="currentColor" stroke-width="1.2"/></svg>
+              </span>
+            </button>
+            <button type="button" class="win-cap-btn close" id="btnWinClose" data-i18n-title="winCloseTip" title="Закрыть">
+              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Row 2: Slim Menubar + Quiet Formatting Strip -->
+      <div class="menubar">
+        <div class="menubar-left">
+          <button type="button" class="menu-trigger" data-menu="fileMenu" data-i18n="menuFile">Файл</button>
+          <button type="button" class="menu-trigger" data-menu="editMenu" data-i18n="menuEdit">Правка</button>
+          <button type="button" class="menu-trigger" data-menu="viewMenu" data-i18n="menuView">Вид</button>
+
+          <span class="v-sep"></span>
+
+          <!-- Rich Mode Minimal Icons -->
+          <div class="menubar-center" id="richToolsGroup">
+            <select class="fmt-select" id="blockFormatSelect">
+              <option value="P" data-i18n="blockP">Текст</option>
+              <option value="H1" data-i18n="blockH1">Заголовок 1</option>
+              <option value="H2" data-i18n="blockH2">Заголовок 2</option>
+              <option value="H3" data-i18n="blockH3">Заголовок 3</option>
+              <option value="BLOCKQUOTE" data-i18n="blockQuote">Цитата</option>
+              <option value="PRE" data-i18n="blockCode">Код</option>
+            </select>
+
+            <button type="button" class="fmt-btn" data-cmd="bold" data-i18n-title="boldTip"><b>B</b></button>
+            <button type="button" class="fmt-btn" data-cmd="italic" data-i18n-title="italicTip"><i>I</i></button>
+            <button type="button" class="fmt-btn" data-cmd="underline" data-i18n-title="underlineTip"><u>U</u></button>
+            <button type="button" class="fmt-btn" data-cmd="strikeThrough" data-i18n-title="strikeTip"><s>S</s></button>
+
+            <span class="v-sep"></span>
+
+            <button type="button" class="fmt-btn" data-cmd="insertUnorderedList" data-i18n-title="ulTip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="fmt-btn" data-cmd="insertOrderedList" data-i18n-title="olTip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+            </button>
+            <button type="button" class="fmt-btn" id="btnChecklist" data-i18n-title="checkTip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1.2"/><path d="m4.5 8 1.2 1.2 2.3-2.4"/><line x1="13" y1="8" x2="21" y2="8"/><rect x="3" y="14" width="6" height="6" rx="1.2"/><line x1="13" y1="17" x2="21" y2="17"/></svg>
+            </button>
+            <button type="button" class="fmt-btn" id="btnInlineCode" data-i18n-title="codeTip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </button>
+          </div>
+
+          <!-- Plain TXT Mode Minimal Controls -->
+          <div class="menubar-center" id="txtToolsGroup" style="display:none">
+            <button type="button" class="fmt-btn active" id="btnLineNumbers" data-i18n="lineNumsLabel">Строки</button>
+            <button type="button" class="fmt-btn" id="btnMdPreview" data-i18n="mdPreviewLabel">Markdown</button>
+          </div>
+        </div>
+
+        <div class="menubar-right">
+          <button type="button" class="mode-toggle-btn" id="btnModeToggle">Формат</button>
+          <button type="button" class="fmt-btn" id="btnToggleFind" data-i18n-title="findTip" title="Поиск">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Trash Banner -->
+      <div class="trash-bar" id="trashBanner">
+        <span data-i18n="trashNotice">Заметка в корзине</span>
+        <div style="display:flex;gap:6px">
+          <button type="button" id="btnRestoreNote" data-i18n="restoreBtn">Восстановить</button>
+          <button type="button" id="btnDeleteForever" style="color:#ef4444" data-i18n="deleteForeverBtn">Удалить навсегда</button>
+        </div>
+      </div>
+
+      <!-- Compact Find & Replace Bar -->
+      <div class="find-bar" id="findBar">
+        <div class="find-row">
+          <input type="text" id="findInput" data-i18n-placeholder="findPlaceholder" placeholder="Найти" />
+          <span class="find-count" id="findCount">0/0</span>
+          <button type="button" class="fmt-btn" id="btnFindCase" data-i18n-title="caseTip">Aa</button>
+          <button type="button" class="fmt-btn" id="btnFindPrev">↑</button>
+          <button type="button" class="fmt-btn" id="btnFindNext">↓</button>
+          <button type="button" class="fmt-btn" id="btnCloseFind">✕</button>
+        </div>
+        <div class="find-row">
+          <input type="text" id="replaceInput" data-i18n-placeholder="replacePlaceholder" placeholder="Заменить" />
+          <button type="button" class="s-btn" id="btnReplaceOne" data-i18n="replaceOne">Заменить</button>
+          <button type="button" class="s-btn" id="btnReplaceAll" data-i18n="replaceAll">Все</button>
+        </div>
+      </div>
+
+      <!-- Clean Writing Surface -->
+      <div class="editor-scroll">
+        <div class="editor-sheet" id="editorSheet">
+          <div class="title-row">
+            <input type="text" class="note-title" id="noteTitleInput" data-i18n-placeholder="titlePlaceholder" placeholder="Без названия" />
+            <div class="title-actions">
+              <select class="quiet-folder-select" id="noteFolderSelect"></select>
+              <button type="button" class="plain-icon-btn" id="btnPinNote" data-i18n-title="pinTip" style="width:24px;height:24px">
+                <svg id="pinSvg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Rich Mode -->
+          <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="true" data-placeholder="Введите текст..."></div>
+
+          <!-- Plain TXT Mode -->
+          <div class="plain-stage" id="plainStage">
+            <div class="plain-box">
+              <div class="line-gutter" id="lineNumbers">1</div>
+              <textarea class="plain-textarea" id="plainTextarea" spellcheck="true" data-i18n-placeholder="txtPlaceholder" placeholder="Введите текст..."></textarea>
+            </div>
+            <div class="md-preview rich-editor" id="mdPreviewPane"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Native 25px Status Bar -->
+      <footer class="statusbar">
+        <div class="status-group">
+          <span><span data-i18n="statLines">Стр</span> <span id="statLinesVal">1</span></span>
+          <span class="status-sep"></span>
+          <span><span data-i18n="statWords">Слов</span>: <span id="statWordsVal">0</span></span>
+          <span class="status-sep"></span>
+          <span><span data-i18n="statChars">Символов</span>: <span id="statCharsVal">0</span></span>
+        </div>
+        <div class="status-group">
+          <span id="portableStatusText">Сохранено</span>
+          <span class="status-sep"></span>
+          <span id="statusModeLabel">Формат</span>
+          <span class="status-sep"></span>
+          <span id="statusEncodingLabel">UTF-8</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- NATIVE DROPDOWN MENUS -->
+  <div class="dropdown-menu" id="fileMenu">
+    <button type="button" class="dd-item" id="mNewNote"><span data-i18n="mNewNote">Новая заметка</span><span class="dd-kbd">Alt+N</span></button>
+    <button type="button" class="dd-item" id="mOpenFile"><span data-i18n="mOpenFile">Открыть...</span><span class="dd-kbd">Ctrl+O</span></button>
+    <button type="button" class="dd-item" id="mDuplicate"><span data-i18n="mDuplicate">Дублировать заметку</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item" id="mSaveDirect"><span data-i18n="mSaveDirect">Сохранить</span><span class="dd-kbd">Ctrl+S</span></button>
+    <button type="button" class="dd-item" id="mSaveAs"><span data-i18n="mSaveAs">Сохранить как...</span><span class="dd-kbd">Ctrl+Shift+S</span></button>
+    <button type="button" class="dd-item" id="mSaveTxt"><span data-i18n="mSaveTxt">Экспорт в .txt</span></button>
+    <button type="button" class="dd-item" id="mSaveMd"><span data-i18n="mSaveMd">Экспорт в .md</span></button>
+    <button type="button" class="dd-item" id="mExportHtml"><span data-i18n="mExportHtml">Экспорт в .html</span></button>
+    <button type="button" class="dd-item" id="mPrint"><span data-i18n="mPrint">Печать...</span><span class="dd-kbd">Ctrl+P</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item" id="mExportBackup"><span data-i18n="mExportBackup">Экспорт базы (.json)</span></button>
+    <button type="button" class="dd-item" id="mImportBackup"><span data-i18n="mImportBackup">Импорт базы (.json)</span></button>
+    <button type="button" class="dd-item" id="mLinkDb"><span data-i18n="mLinkDb">Привязать файл базы...</span></button>
+    <button type="button" class="dd-item" id="mOpenBrowser"><span data-i18n="mOpenBrowser">Открыть в браузере по умолчанию</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item danger" id="mMoveTrash"><span data-i18n="mMoveTrash">Удалить в корзину</span></button>
+  </div>
+
+  <div class="dropdown-menu" id="editMenu">
+    <button type="button" class="dd-item" id="mUndo"><span data-i18n="mUndo">Отменить</span><span class="dd-kbd">Ctrl+Z</span></button>
+    <button type="button" class="dd-item" id="mRedo"><span data-i18n="mRedo">Повторить</span><span class="dd-kbd">Ctrl+Y</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item" id="mFind"><span data-i18n="mFind">Найти и заменить...</span><span class="dd-kbd">Ctrl+F</span></button>
+    <button type="button" class="dd-item" id="mTimestamp"><span data-i18n="mTimestamp">Дата и время</span><span class="dd-kbd">F5</span></button>
+    <button type="button" class="dd-item" id="mClearFmt"><span data-i18n="mClearFmt">Очистить формат</span></button>
+  </div>
+
+  <div class="dropdown-menu" id="viewMenu">
+    <button type="button" class="dd-item" id="mToggleViewLayout"><span data-i18n="mToggleViewLayout">Компактный / Полный вид</span><span class="dd-kbd">Alt+V</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item" id="mToggleSidebar"><span data-i18n="mToggleSidebar">Боковая панель</span><span class="dd-kbd">Ctrl+\</span></button>
+    <button type="button" class="dd-item" id="mToggleFolders"><span data-i18n="mToggleFolders">Показывать папки</span></button>
+    <button type="button" class="dd-item" id="mSwitchMode"><span data-i18n="mSwitchMode">Переключить Формат / TXT</span></button>
+    <button type="button" class="dd-item" id="mWordWrap"><span data-i18n="mWordWrap">Перенос по словам</span></button>
+    <button type="button" class="dd-item" id="mFullWidth"><span data-i18n="mFullWidth">На всю ширину окна</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item" data-set-mat="blur"><span data-i18n="mStyleBlur">Стиль: Заблюренный</span></button>
+    <button type="button" class="dd-item" data-set-mat="solid"><span data-i18n="mStyleSolid">Стиль: Классический</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item" id="mOpenSettings"><span data-i18n="mSettings">Параметры...</span><span class="dd-kbd">Ctrl+,</span></button>
+  </div>
+
+  <!-- Right-Click Context Menu for Sidebar Note Rows -->
+  <div class="dropdown-menu" id="noteContextMenu" style="min-width:170px">
+    <button type="button" class="dd-item" id="ctxPinBtn"><span id="ctxPinLabel">В избранное</span></button>
+    <button type="button" class="dd-item" id="ctxDupBtn"><span data-i18n="ctxDuplicate">Дублировать</span></button>
+    <div class="dd-sep"></div>
+    <button type="button" class="dd-item danger" id="ctxDelBtn"><span data-i18n="ctxDelete">Удалить</span></button>
+  </div>
+
+  <!-- CLEAN NATIVE SETTINGS DIALOG -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="settings-dialog" id="settingsDialog">
+      <div class="settings-header">
+        <div class="settings-header-left">
+          <span data-i18n="settingsTitle">Параметры</span>
+          <div class="seg-group settings-top-tabs" id="settingsTopTabs">
+            <button type="button" class="seg-opt active" data-settings-tab="general" data-i18n="sTabGeneral">Настройки</button>
+            <button type="button" class="seg-opt" data-settings-tab="languages" data-i18n="sTabLanguages">Языки</button>
+          </div>
+        </div>
+        <button type="button" class="plain-icon-btn" id="btnCloseSettings" style="width:24px;height:24px">✕</button>
+      </div>
+
+      <div class="settings-body">
+        <div class="settings-tab-pane active" id="settingsPaneGeneral" data-settings-pane="general">
+        <!-- View & Theme -->
+        <div class="settings-group">
+          <div class="s-row">
+            <span class="s-label" data-i18n="sViewLayout">Вид интерфейса</span>
+            <div class="seg-group" id="setViewLayoutGroup">
+              <button type="button" class="seg-opt active" data-view-layout="full" data-i18n="vFull">Полный</button>
+              <button type="button" class="seg-opt" data-view-layout="compact" data-i18n="vCompact">Компактный</button>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sShowFolders">Показывать папки</span>
+            <div class="seg-group" id="setFoldersGroup">
+              <button type="button" class="seg-opt active" data-folders="on" data-i18n="optOn">Вкл</button>
+              <button type="button" class="seg-opt" data-folders="off" data-i18n="optOff">Выкл</button>
+            </div>
+          </div>
+
+          <div class="s-row col">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%">
+              <span class="s-label" data-i18n="sFleetwayThemes">Темы от FleetwayLOL</span>
+              <div class="seg-group" id="setFleetwayThemesGroup">
+                <button type="button" class="seg-opt" data-fleetway-themes="on" data-i18n="optOn">Вкл</button>
+                <button type="button" class="seg-opt active" data-fleetway-themes="off" data-i18n="optOff">Выкл</button>
+              </div>
+            </div>
+            <div class="s-subhint" style="margin-top:5px" data-i18n="fleetwayDisclaimer">Все обои, арты и персонажи в разделе «От FleetwayLOL» не принадлежат FleetwayLOL — все права принадлежат их оригинальным авторам и создателям игр.</div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sEasterEggs">Пасхалки (на любителя)</span>
+            <div class="seg-group" id="setEasterEggsGroup">
+              <button type="button" class="seg-opt" data-easter-eggs="on" data-i18n="optOn">Вкл</button>
+              <button type="button" class="seg-opt active" data-easter-eggs="off" data-i18n="optOff">Выкл</button>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sTheme">Тема приложения</span>
+            <div class="seg-group" id="setThemeGroup">
+              <button type="button" class="seg-opt" data-theme-mode="light" data-i18n="tLight">Светлая</button>
+              <button type="button" class="seg-opt active" data-theme-mode="dark" data-i18n="tDark">Тёмная</button>
+              <button type="button" class="seg-opt" data-theme-mode="auto" data-i18n="tAuto">Системная</button>
+              <button type="button" class="seg-opt secret-flowey-opt" id="btnThemeFlowey" data-theme-mode="flowey"><span data-i18n="tFlowey">Три героя Встречают рассвет...</span></button>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sMaterial">Стиль окна</span>
+            <div class="seg-group" id="setMaterialGroup">
+              <button type="button" class="seg-opt active" data-mat="blur" data-i18n="mBlur">Блюр</button>
+              <button type="button" class="seg-opt" data-mat="solid" data-i18n="mSolid">Обычный</button>
+            </div>
+          </div>
+
+          <div class="s-row col">
+            <span class="s-label" data-i18n="sAccent">Акцентный цвет</span>
+            <div class="swatches" id="accentsSwatches">
+              <button type="button" class="swatch" data-accent="white" style="background:#ffffff" title="White / Белый"></button>
+              <button type="button" class="swatch" data-accent="silver" style="background:#94a3b8" title="Silver"></button>
+              <button type="button" class="swatch active" data-accent="sapphire" style="background:#0078d4" title="Blue"></button>
+              <button type="button" class="swatch" data-accent="sky" style="background:#38bdf8" title="Sky"></button>
+              <button type="button" class="swatch" data-accent="lagoon" style="background:#14b8a6" title="Lagoon"></button>
+              <button type="button" class="swatch" data-accent="emerald" style="background:#10b981" title="Emerald"></button>
+              <button type="button" class="swatch" data-accent="lime" style="background:#84cc16" title="Lime"></button>
+              <button type="button" class="swatch" data-accent="gold" style="background:#facc15" title="Gold"></button>
+              <button type="button" class="swatch" data-accent="amber" style="background:#f59e0b" title="Amber"></button>
+              <button type="button" class="swatch" data-accent="coral" style="background:#f97316" title="Coral"></button>
+              <button type="button" class="swatch" data-accent="crimson" style="background:#ef4444" title="Crimson"></button>
+              <button type="button" class="swatch" data-accent="rose" style="background:#f43f5e" title="Rose"></button>
+              <button type="button" class="swatch" data-accent="magenta" style="background:#d946ef" title="Magenta"></button>
+              <button type="button" class="swatch" data-accent="lavender" style="background:#a855f7" title="Lavender"></button>
+              <button type="button" class="swatch" data-accent="amethyst" style="background:#7c3aed" title="Purple"></button>
+              <button type="button" class="swatch" data-accent="indigo" style="background:#4f46e5" title="Indigo"></button>
+              <label class="swatch-custom" title="Custom">
+                <span>+</span>
+                <input type="color" id="customAccentInput" value="#3b82f6" />
+              </label>
+            </div>
+          </div>
+
+          <div class="s-row col">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%">
+              <span class="s-label" data-i18n="sAppIcon">Иконка приложения</span>
+              <button type="button" class="s-btn" id="btnDesktopShortcut" data-i18n="btnDesktopShortcut" style="display:none">Ярлык на Рабочий стол</button>
+            </div>
+            <div class="app-icon-grid" id="appIconGroup">
+              <button type="button" class="app-icon-btn active" data-app-icon="bw" data-i18n-title="iconBw" title="Чёрно-белая">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igBw" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#282b34"/><stop offset="100%" stop-color="#14161b"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igBw)" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+                <span data-i18n="iconBw">Ч/Б</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="blue" data-i18n-title="iconBlue" title="Синяя">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#265cc7"/><stop offset="100%" stop-color="#17388a"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igBlue)" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+                <span data-i18n="iconBlue">Синяя</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="white" data-i18n-title="iconWhite" title="Белая">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igWh" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fafbfc"/><stop offset="100%" stop-color="#dde3ec"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igWh)" stroke="rgba(15,23,42,0.28)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#161921"/></svg>
+                <span data-i18n="iconWhite">Белая</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="purple" data-i18n-title="iconPurple" title="Фиолетовая">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igPu" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5e36b8"/><stop offset="100%" stop-color="#381c78"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igPu)" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+                <span data-i18n="iconPurple">Фиолет</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="yellow" data-i18n-title="iconYellow" title="Жёлтая">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igYe" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f2ba26"/><stop offset="100%" stop-color="#c9870f"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igYe)" stroke="rgba(15,23,42,0.28)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#161921"/></svg>
+                <span data-i18n="iconYellow">Жёлтая</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="red" data-i18n-title="iconRed" title="Красная">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igRe" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c42936"/><stop offset="100%" stop-color="#7d1420"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igRe)" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+                <span data-i18n="iconRed">Красная</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="green" data-i18n-title="iconGreen" title="Зелёная">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igGr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#198761"/><stop offset="100%" stop-color="#0d523a"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igGr)" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+                <span data-i18n="iconGreen">Зелёная</span>
+              </button>
+              <button type="button" class="app-icon-btn" data-app-icon="pink" data-i18n-title="iconPink" title="Розовая">
+                <svg viewBox="0 0 64 64"><defs><linearGradient id="igPi" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bf307a"/><stop offset="100%" stop-color="#78194e"/></linearGradient></defs><rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#igPi)" stroke="rgba(255,255,255,0.34)" stroke-width="1.8"/><path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/></svg>
+                <span data-i18n="iconPink">Розовая</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blur, Glass & Internet Photo Themes -->
+        <div class="settings-group" id="glassSettingsGroup">
+          <div class="s-row col">
+            <div class="theme-gallery-head">
+              <span class="s-label" data-i18n="sInternetThemes">Темы из интернета</span>
+              <div class="seg-group" id="themeMainTabs">
+                <button type="button" class="seg-opt active" id="tabMainFleetwayBtn" data-main-tab="fleetway">Атмосфера</button>
+                <button type="button" class="seg-opt" data-main-tab="custom"><span data-i18n="catCustom">Мои</span><span id="customThemesCountBadge"></span></button>
+              </div>
+            </div>
+
+            <!-- Categories inside "От FleetwayLOL" (no "Все" dump tab!) -->
+            <div class="cat-pills sub-cat-row" id="fleetwaySubTabs">
+              <button type="button" class="cat-pill active" data-cat="dr5" data-i18n="catDr5">Глава 5</button>
+              <button type="button" class="cat-pill" data-cat="roaring_knight">Roaring Knight</button>
+              <button type="button" class="cat-pill" data-cat="deltarune">Deltarune</button>
+              <button type="button" class="cat-pill" data-cat="undertale">Undertale</button>
+              <button type="button" class="cat-pill" data-cat="games" data-i18n="catGames">Другие игры</button>
+              <button type="button" class="cat-pill" data-cat="sonic">Sonic</button>
+              <button type="button" class="cat-pill" data-cat="atmos" data-i18n="catAtmos">Атмосфера</button>
+            </div>
+            <div class="s-subhint" id="fleetwayGalleryDisclaimer" style="display:none;margin:2px 0 6px" data-i18n="fleetwayDisclaimer">Все обои, арты и персонажи в разделе «От FleetwayLOL» не принадлежат FleetwayLOL — все права принадлежат их оригинальным авторам и создателям игр.</div>
+
+            <!-- Dynamic Subfolders inside "Мои" (grouped by search query / custom subfolder) -->
+            <div class="cat-pills sub-cat-row" id="customSubfoldersRow" style="display:none">
+              <div id="customSubfolderTabs" style="display:contents"></div>
+              <button type="button" class="cat-pill add-subfolder-pill" id="btnNewThemeSubfolder" data-i18n="btnNewSubfolder">+ Папка</button>
+            </div>
+
+            <div class="wp-grid dr-wp-grid theme-gallery-scroll" id="wpGrid">
+              <!-- Dynamic user-imported internet themes are injected right before built-in cards -->
+              <div id="importedThemesMount" style="display:contents"></div>
+
+              <!-- DELTARUNE CHAPTER 5 ("Festival Day" — pure Ch.5 artworks + secret theme) -->
+              <button type="button" class="wp-card dr-photo-card" data-cat="dr5" data-scene="dr5_flowery"><span data-i18n="wpDr5Flowery">Флауэри</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="dr5" data-scene="dr5_seven_flowers"><span data-i18n="wpDr5Seven">Семь Цветов</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="dr5" data-scene="dr5_pink"><span data-i18n="wpDr5Pink">Пинк (Мью Мью)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="dr5" data-scene="dr5_aqua"><span data-i18n="wpDr5Aqua">Аква (Гл. 5)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="dr5" data-scene="dr5_seth"><span data-i18n="wpDr5Seth">Сет (Гл. 5)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="dr5" data-scene="dr5_noelle_ch5"><span data-i18n="wpDr5Noelle">Ноэлль (Гл. 5)</span></button>
+
+              <!-- ROARING KNIGHT SUBFOLDER / CATEGORY (2 real internet artworks) -->
+              <button type="button" class="wp-card dr-photo-card" data-cat="roaring_knight" data-scene="dr5_knight"><span data-i18n="wpDr5Knight">Рокочущий Рыцарь</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="roaring_knight" data-scene="rk_fountain"><span data-i18n="wpRkFountain">Тёмный фонтан</span></button>
+
+              <!-- CHARACTERS FROM OTHER GAMES (15 real internet HD artworks) -->
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_hornet"><span data-i18n="wpGmHornet">Хорнет (Silksong)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="web_hollow"><span data-i18n="wpWebHollow">Hollow Knight</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_v1"><span data-i18n="wpGmV1">V1 (ULTRAKILL)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_omori"><span data-i18n="wpGmOmori">Омори (OMORI)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_niko"><span data-i18n="wpGmNiko">Нико (OneShot)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_cuphead"><span data-i18n="wpGmCuphead">Капхед и Магмен</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_joker"><span data-i18n="wpGmJoker">Джокер (Persona 5)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_2b"><span data-i18n="wpGm2B">2B (NieR)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_madeline"><span data-i18n="wpGmMadeline">Мадлен (Celeste)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_zagreus"><span data-i18n="wpGmZagreus">Загрей (Hades)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_doom"><span data-i18n="wpGmDoom">Палач Рока (DOOM)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_link"><span data-i18n="wpGmLink">Линк и Зельда</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_geralt"><span data-i18n="wpGmGeralt">Геральт (Ведьмак)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_furina"><span data-i18n="wpGmFurina">Фурина (Genshin)</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="games" data-scene="gm_lucy"><span data-i18n="wpGmLucy">Люси (Cyberpunk)</span></button>
+
+              <!-- SONIC CHARACTER THEMES (12 real internet HD artworks) -->
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_sonic"><span data-i18n="wpSnSonic">Соник</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_shadow"><span data-i18n="wpSnShadow">Шэдоу</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_tails"><span data-i18n="wpSnTails">Тейлз</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_knuckles"><span data-i18n="wpSnKnuckles">Наклз</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_silver"><span data-i18n="wpSnSilver">Сильвер</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_amy"><span data-i18n="wpSnAmy">Эми Роуз</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_metalsonic"><span data-i18n="wpSnMetal">Метал Соник</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_supersonic"><span data-i18n="wpSnSuper">Супер Соник</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_eggman"><span data-i18n="wpSnEggman">Д-р Эггман</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_darksonic"><span data-i18n="wpSnDarkSonic">Тёмный Соник</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_forces"><span data-i18n="wpSnForces">Битва Соника</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="sonic" data-scene="sn_shadowdark"><span data-i18n="wpSnShadowRed">Шэдоу (Алый)</span></button>
+
+              <!-- DELTARUNE CH.1–4 THEMES (8 real internet HD artworks) -->
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_kris"><span data-i18n="wpDrKris">Крис</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_susie"><span data-i18n="wpDrSusie">Сьюзи</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_ralsei"><span data-i18n="wpDrRalsei">Ральзей</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_noelle"><span data-i18n="wpDrNoelle">Ноэлль</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_spamton"><span data-i18n="wpDrSpamton">Спамтон</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_jevil"><span data-i18n="wpDrJevil">Джевил</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_queen"><span data-i18n="wpDrQueen">Королева</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="deltarune" data-scene="dr_photo_cyber"><span data-i18n="wpDrCyber">Кибер-Сити</span></button>
+
+              <!-- UNDERTALE THEMES (4 real internet HD artworks) -->
+              <button type="button" class="wp-card dr-photo-card" data-cat="undertale" data-scene="dr5_asgore"><span data-i18n="wpDr5Asgore">Фриск и другие...</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="undertale" data-scene="ut_sans"><span data-i18n="wpUtSans">Санс</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="undertale" data-scene="ut_gaster_sans"><span data-i18n="wpUtGaster">Санс Бластер</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="undertale" data-scene="ut_waterfall"><span data-i18n="wpUtWaterfall">Подземелье</span></button>
+
+              <!-- ATMOSPHERIC INTERNET PHOTO THEMES (7 real internet HD photos + OS Screen) -->
+              <button type="button" class="wp-card dr-photo-card active" data-cat="atmos" data-scene="web_galaxy"><span data-i18n="wpWebGalaxy">Галактика</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="atmos" data-scene="web_aurora"><span data-i18n="wpWebAurora">Сияние и горы</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="atmos" data-scene="web_cyberpunk"><span data-i18n="wpWebCyberpunk">Киберпанк</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="atmos" data-scene="web_sakura"><span data-i18n="wpWebSakura">Ночная сакура</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="atmos" data-scene="web_ocean"><span data-i18n="wpWebOcean">Океан закат</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="atmos" data-scene="web_alps"><span data-i18n="wpWebAlps">Горное озеро</span></button>
+              <button type="button" class="wp-card dr-photo-card" data-cat="atmos" data-scene="web_retro"><span data-i18n="wpWebRetro">Ретро-комната</span></button>
+              <button type="button" class="wp-card secret-flowey-opt" id="wpCardFlowey" data-cat="dr5" data-scene="flowey_garden"><span data-i18n="wpFlowey">Три героя Встречают рассвет...</span></button>
+            </div>
+            <div class="custom-empty-hint" id="customThemesEmptyHint" data-i18n="customThemesEmpty" style="display:none">Пока нет своих тем — найдите картинку в интернете или вставьте ссылку ниже!</div>
+          </div>
+
+          <!-- INTERNET THEME IMPORTER (Live Online Search + Direct URL + JSON Pack) -->
+          <div class="s-row col" id="netThemeImporterRow">
+            <div class="theme-gallery-head">
+              <span class="s-label" data-i18n="sNetImportTitle">Импорт тем из интернета</span>
+              <div class="cat-pills" id="netImportModeTabs">
+                <button type="button" class="cat-pill active" data-import-tab="search" data-i18n="netTabSearch">Поиск в сети</button>
+                <button type="button" class="cat-pill" data-import-tab="url" data-i18n="netTabUrl">По ссылке URL</button>
+              </div>
+            </div>
+
+            <!-- Sub-pane 1: Live Online Wallpaper/Theme Search -->
+            <div class="net-import-pane" id="netSearchPane">
+              <div class="net-input-row">
+                <input type="text" class="net-text-input" id="netSearchInput" data-i18n-placeholder="netSearchPlaceholder" placeholder="Введите: Sonic, Shadow, Deltarune, Anime, Cyberpunk..." autocomplete="off" />
+                <button type="button" class="s-btn accent-btn" id="btnNetSearch" data-i18n="btnNetSearch">Найти</button>
+              </div>
+              <div class="net-quick-tags" id="netQuickTags">
+                <button type="button" class="net-tag" data-q="Deltarune">Deltarune</button>
+                <button type="button" class="net-tag" data-q="Hollow Knight Hornet">Hollow Knight</button>
+                <button type="button" class="net-tag" data-q="ULTRAKILL">ULTRAKILL</button>
+                <button type="button" class="net-tag" data-q="OMORI">OMORI</button>
+                <button type="button" class="net-tag" data-q="Persona 5">Persona 5</button>
+                <button type="button" class="net-tag" data-q="Sonic the Hedgehog">Sonic</button>
+                <button type="button" class="net-tag" data-q="Shadow the Hedgehog">Shadow</button>
+                <button type="button" class="net-tag" data-q="Cyberpunk Edgerunners">Cyberpunk</button>
+              </div>
+              <div class="net-status-row">
+                <div class="net-status-line" id="netSearchStatus" style="display:none"></div>
+                <button type="button" class="s-btn net-anyq-btn" id="btnSearchAnyQuality" data-i18n="btnSearchAnyQuality" style="display:none">Искать не только HD качество (может быть хуже)</button>
+              </div>
+              <div class="wp-grid dr-wp-grid net-results-grid" id="netSearchGrid" style="display:none"></div>
+            </div>
+
+            <!-- Sub-pane 2: Import by Direct Image / Theme URL or JSON File -->
+            <div class="net-import-pane" id="netUrlPane" style="display:none">
+              <div class="net-input-row">
+                <input type="url" class="net-text-input" id="netUrlInput" data-i18n-placeholder="netUrlPlaceholder" placeholder="https://... (ссылка на картинку .jpg/.png/.webp или .json тему)" autocomplete="off" />
+              </div>
+              <div class="net-input-row" style="margin-top:6px">
+                <input type="text" class="net-text-input" id="netNameInput" data-i18n-placeholder="netNamePlaceholder" placeholder="Название темы (необязательно)" maxlength="32" autocomplete="off" />
+                <input type="text" class="net-text-input" id="netFolderInput" list="customFoldersDatalist" data-i18n-placeholder="netFolderPlaceholder" placeholder="Подпапка (напр. Sonic)" maxlength="28" autocomplete="off" style="max-width:165px" />
+                <datalist id="customFoldersDatalist"></datalist>
+                <button type="button" class="s-btn accent-btn" id="btnImportNetUrl" data-i18n="btnImportUrl">Импортировать</button>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                <button type="button" class="s-btn" id="btnImportThemeFile" data-i18n="btnImportThemeFile">Импорт файла темы (.json)</button>
+                <button type="button" class="s-btn" id="btnExportThemesFile" data-i18n="btnExportThemesFile">Экспорт моих тем (.json)</button>
+                <input type="file" id="importThemeFileInput" accept=".json,application/json,image/*" style="display:none" />
+              </div>
+            </div>
+          </div>
+
+          <div class="s-row" id="wpAnimRow">
+            <span class="s-label" data-i18n="sWpAnim">Анимация обоев</span>
+            <div class="seg-group" id="setWpAnimGroup">
+              <button type="button" class="seg-opt active" data-wp-anim="on" data-i18n="wpAnimOn">Анимированные</button>
+              <button type="button" class="seg-opt" data-wp-anim="off" data-i18n="wpAnimOff">Статичные</button>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <div>
+              <div class="s-label" data-i18n="sBlur">Сила размытия</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="range" class="s-range" id="blurRange" min="0" max="60" value="22" />
+              <span style="min-width:34px;text-align:right;font-size:11.5px;color:var(--text-2)" id="blurValLabel">22px</span>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <div>
+              <div class="s-label" data-i18n="sOpacity">Плотность фона</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="range" class="s-range" id="opacityRange" min="10" max="96" value="48" />
+              <span style="min-width:34px;text-align:right;font-size:11.5px;color:var(--text-2)" id="opacityValLabel">48%</span>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sWallpaper">Свой файл обоев</span>
+            <div style="display:flex;gap:6px">
+              <button type="button" class="s-btn" id="btnUploadWallpaper" data-i18n="btnChooseImg">Выбрать...</button>
+              <button type="button" class="s-btn" id="btnClearWallpaper" data-i18n="btnResetImg">Сбросить</button>
+              <input type="file" id="wallpaperFileInput" accept="image/*" style="display:none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Typography & Portable Data -->
+        <div class="settings-group">
+          <div class="s-row col">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;flex-wrap:wrap">
+              <span class="s-label" data-i18n="sFont">Шрифт текста</span>
+              <select class="s-select" id="fontFamilySelect" style="max-width:240px">
+                <option value="sans" data-i18n="fSans" style="font-family:'Segoe UI',sans-serif">Стандартный (Segoe UI)</option>
+                <option value="calibri" data-i18n="fCalibri" style="font-family:Calibri,'Segoe UI',sans-serif">Мягкий (Calibri)</option>
+                <option value="verdana" data-i18n="fVerdana" style="font-family:Verdana,sans-serif">Широкий чёткий (Verdana)</option>
+                <option value="tahoma" data-i18n="fTahoma" style="font-family:Tahoma,sans-serif">Плотный (Tahoma)</option>
+                <option value="trebuchet" data-i18n="fTrebuchet" style="font-family:'Trebuchet MS',sans-serif">Выразительный (Trebuchet MS)</option>
+                <option value="bahnschrift" data-i18n="fBahnschrift" style="font-family:Bahnschrift,'Arial Narrow',sans-serif">Технический (Bahnschrift)</option>
+                <option value="serif" data-i18n="fSerif" style="font-family:Georgia,serif">С засечками (Georgia)</option>
+                <option value="cambria" data-i18n="fCambria" style="font-family:Cambria,Georgia,serif">Книжный (Cambria)</option>
+                <option value="times" data-i18n="fTimes" style="font-family:'Times New Roman',serif">Классический (Times New Roman)</option>
+                <option value="palatino" data-i18n="fPalatino" style="font-family:'Palatino Linotype',Georgia,serif">Литературный (Palatino)</option>
+                <option value="mono" data-i18n="fMono" style="font-family:'Cascadia Mono',Consolas,monospace">Моноширинный (Cascadia / Consolas)</option>
+                <option value="courier" data-i18n="fCourier" style="font-family:'Courier New',monospace">Печатная машинка (Courier New)</option>
+                <option value="handwriting" data-i18n="fHandwriting" style="font-family:'Segoe Print',cursive">Рукописный (Segoe Print)</option>
+                <option value="script" data-i18n="fScript" style="font-family:'Segoe Script',cursive">Каллиграфия (Segoe Script)</option>
+                <option value="comic" data-i18n="fComic" style="font-family:'Comic Sans MS',cursive">Неформальный (Comic Sans MS)</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+              <button type="button" class="s-btn accent-btn" id="btnUploadCustomFont" data-i18n="btnUploadFont">Загрузить шрифт (.ttf/.otf/.woff2)</button>
+              <button type="button" class="s-btn" id="btnAddSystemFontName" data-i18n="btnAddFontName">По названию из ОС...</button>
+              <input type="file" id="customFontFileInput" accept=".ttf,.otf,.woff,.woff2,font/*" style="display:none" />
+            </div>
+            <div class="custom-fonts-chips" id="customFontsChips"></div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sFontSize">Размер шрифта</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button type="button" class="s-btn" id="btnFontDec">−</button>
+              <span style="min-width:34px;text-align:center;font-size:12px" id="fontSizeVal">15px</span>
+              <button type="button" class="s-btn" id="btnFontInc">+</button>
+            </div>
+          </div>
+
+          <div class="s-row">
+            <span class="s-label" data-i18n="sPortableDb">Портативная база заметок</span>
+            <div style="display:flex;gap:6px">
+              <button type="button" class="s-btn" id="btnExportDbSettings" data-i18n="btnExportDb">Экспорт (.json)</button>
+              <button type="button" class="s-btn" id="btnImportDbSettings" data-i18n="btnImportDb">Импорт (.json)</button>
+            </div>
+          </div>
+
+          <div class="s-row col" id="notepadDefaultRow">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+              <span class="s-label" data-i18n="sDefaultNotepad">Замена Блокнота Windows</span>
+              <span class="default-np-badge" id="notepadDefaultBadge" data-i18n="badgeNotepadActive" style="display:none">По умолчанию</span>
+            </div>
+            <div class="s-subhint" data-i18n="sDefaultNotepadHint">Типы: .inf .ini .log .ps1 .psd1 .psm1 .scp .txt .wtx MS-NOTEPAD .json .bat + код</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+              <button type="button" class="s-btn accent-btn" id="btnSetDefaultNotepad" data-i18n="btnSetDefaultNotepad">Сделать по умолчанию</button>
+              <button type="button" class="s-btn" id="btnRestoreNotepad" data-i18n="btnRestoreNotepad">Вернуть Блокнот Windows</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deltarune Flowery Easter Egg ("JARONA!") at the very bottom of Settings -->
+        <div class="flowey-easter-zone" id="floweyEasterZone">
+          <button type="button" class="flowey-sprite-btn" id="btnFloweySecret" data-i18n-title="floweyTip" title="Flowery...?">
+            <img class="flowery-pixel-img idle" id="floweryIdleImg" alt="Flowery" draggable="false" />
+            <img class="flowery-pixel-img jarona" id="floweryJaronaImg" alt="Flowery JARONA" draggable="false" />
+          </button>
+          <div class="settings-credit">By FleetwayLOL and AI</div>
+        </div>
+        </div>
+
+        <!-- DEDICATED LANGUAGES TAB PANE -->
+        <div class="settings-tab-pane" id="settingsPaneLanguages" data-settings-pane="languages">
+          <div class="settings-group">
+            <div class="s-row col">
+              <span class="s-label" data-i18n="langTabHint">Выберите язык интерфейса приложения:</span>
+              <input type="text" class="net-text-input" id="langSearchInput" data-i18n-placeholder="langSearchPlaceholder" placeholder="Поиск языка (Русский, English, 日本語...)" autocomplete="off" style="margin-top:6px;width:100%" />
+              <div class="lang-cards-grid" id="langCardsGrid"></div>
+            </div>
+          </div>
+          <div class="flowey-easter-zone">
+            <div class="settings-credit">By FleetwayLOL and AI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unsaved Changes Exit Prompt Modal -->
+  <div class="modal-backdrop" id="unsavedCloseModal" aria-hidden="true">
+    <div class="unsaved-dialog" role="dialog" aria-modal="true" aria-labelledby="unsavedModalTitle">
+      <div class="unsaved-head">
+        <span class="unsaved-warn-icon" aria-hidden="true">!</span>
+        <h3 class="unsaved-title" id="unsavedModalTitle" data-i18n="unsavedModalTitle">Вы не сохранили файл!</h3>
+      </div>
+      <p class="unsaved-desc" id="unsavedModalDesc" data-i18n="unsavedModalDesc">В открытом файле есть несохранённые изменения. Что вы хотите сделать перед выходом?</p>
+      <div class="unsaved-actions">
+        <button type="button" class="s-btn" id="btnUnsavedContinue" data-i18n="btnContinueEdit">Продолжить редактирование</button>
+        <button type="button" class="s-btn accent-btn" id="btnUnsavedSaveExit" data-i18n="btnSaveAndExit">Сохранить и выйти</button>
+        <button type="button" class="s-btn danger-btn" id="btnUnsavedDiscardExit" data-i18n="btnExitWithoutSaving">Закрыть без сохранения</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden File Inputs, Drop Overlay & Toast -->
+  <input type="file" id="openNoteFileInput" multiple accept=".inf,.ini,.log,.ps1,.psd1,.psm1,.scp,.txt,.wtx,.ms-notepad,.json,.jsonc,.bat,.cmd,.reg,.vbs,.md,.markdown,.html,.htm,.css,.scss,.less,.js,.mjs,.cjs,.ts,.tsx,.jsx,.vue,.svelte,.py,.c,.cpp,.cc,.cxx,.h,.hpp,.cs,.java,.kt,.swift,.go,.rs,.php,.rb,.lua,.sql,.sh,.xml,.svg,.yaml,.yml,.toml,.cfg,.conf,.config,.env,.properties,.csv,.tsv,.nfo" style="display:none" />
+  <input type="file" id="importBackupInput" accept=".json" style="display:none" />
+  <div class="drop-overlay" id="dropOverlay" data-i18n="dropOverlay">Перетащите файл сюда, чтобы открыть</div>
+  <div class="toast" id="toast"></div>
+
+  <script>/*__INLINE_I18N__*/</script>
+  <script>/*__INLINE_FLOWERY_WP__*/</script>
+  <script>/*__INLINE_DR_WP__*/</script>
+  <script>/*__INLINE_APP__*/</script>
+</body>
+</html>
