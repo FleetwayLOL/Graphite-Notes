@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graphite — Portable Text & Note Editor for Windows</title>
+  <meta name="description" content="Портативный редактор текста и заметок для Windows 10 / 11. Вкладки, режимы окна Блюр и Обычный, кастомные шрифты, кодировки и 15 языков." />
+  <meta property="og:title" content="Graphite — Portable Text & Note Editor" />
+  <meta property="og:description" content="Быстрый портативный блокнот и редактор заметок для Windows 10 / 11 без установки." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%232e333d'/%3E%3Cstop offset='100%25' stop-color='%2312141a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='1.5' y='1.5' width='61' height='61' rx='11' fill='url(%23bg)' stroke='%23ffffff' stroke-opacity='0.35' stroke-width='2'/%3E%3Cpath d='M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z' fill='%23f8fafc'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg-0: #0b0d11;
+      --bg-1: #11141b;
+      --bg-2: #171b24;
+      --panel: rgba(22, 26, 35, 0.78);
+      --panel-solid: #151922;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: #f3f5f8;
+      --muted: #94a0b4;
+      --subtle: #647084;
+      --accent: #e2e8f0;
+      --btn-bg: #f1f5f9;
+      --btn-fg: #0b0d11;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-0);
+      color: var(--text);
+      font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 460px at 50% -80px, rgba(148, 163, 184, 0.13), transparent 70%),
+        radial-gradient(640px 420px at 85% 28%, rgba(100, 116, 139, 0.08), transparent 70%),
+        linear-gradient(180deg, #0d1016 0%, #090b0f 100%);
+      overflow-x: hidden;
+      line-height: 1.55;
+    }
+
+    /* Subtle architectural grid */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 80% 55% at 50% 15%, #000 35%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 15%, #000 35%, transparent 100%);
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Top Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(11, 13, 17, 0.72);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 650;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+    }
+
+    .brand svg {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+    }
+
+    .version-pill {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .lang-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text);
+    }
+
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: all 0.16s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+      border-color: var(--border);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 76px 0 48px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      box-shadow: 0 0 8px rgba(203, 213, 225, 0.7);
+    }
+
+    h1 {
+      font-size: clamp(38px, 6vw, 62px);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #aeb8c8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      max-width: 640px;
+      margin: 0 auto 34px;
+      font-size: clamp(16px, 2.1vw, 18.5px);
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 24px;
+      border-radius: 10px;
+      font-size: 14.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .btn svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+
+    .btn-primary {
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border: 1px solid #ffffff;
+      box-shadow: 0 10px 30px rgba(241, 245, 249, 0.14);
+    }
+
+    .btn-primary:hover {
+      background: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 36px rgba(241, 245, 249, 0.22);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.045);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.085);
+      transform: translateY(-1px);
+    }
+
+    .hero-meta {
+      font-size: 12.5px;
+      color: var(--subtle);
+    }
+
+    /* Interactive App Window Preview */
+    .preview-stage {
+      margin: 44px auto 72px;
+      position: relative;
+      padding: 22px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background:
+        radial-gradient(560px 260px at 22% 20%, rgba(148, 163, 184, 0.18), transparent 70%),
+        radial-gradient(520px 280px at 80% 75%, rgba(71, 85, 105, 0.22), transparent 70%),
+        linear-gradient(135deg, #121620 0%, #0b0e14 100%);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.65);
+    }
+
+    .stage-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 0 4px;
+    }
+
+    .stage-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    .mode-pills {
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .mode-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .mode-pill.active {
+      background: rgba(255, 255, 255, 0.13);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    .mock-win {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(19, 23, 31, 0.72);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      overflow: hidden;
+      text-align: left;
+      transition: background 0.22s ease;
+    }
+
+    .mock-win.solid-mode {
+      background: #14171f;
+      backdrop-filter: none;
+    }
+
+    .mock-titlebar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .mock-title-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .mock-title-left svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .mock-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+    }
+
+    .mock-tab {
+      font-size: 11.5px;
+      padding: 4px 11px;
+      border-radius: 6px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+    }
+
+    .mock-tab.active {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.09);
+      border-color: var(--border);
+    }
+
+    .mock-winctrls {
+      display: flex;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .mock-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 320px;
+    }
+
+    .mock-win.compact-mode .mock-body {
+      grid-template-columns: 1fr;
+    }
+
+    .mock-win.compact-mode .mock-sidebar {
+      display: none;
+    }
+
+    .mock-sidebar {
+      border-right: 1px solid var(--border);
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .mock-search {
+      font-size: 12px;
+      color: var(--subtle);
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      margin-bottom: 10px;
+    }
+
+    .mock-note-item {
+      padding: 9px 10px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      border: 1px solid transparent;
+    }
+
+    .mock-note-item.active {
+      background: rgba(255, 255, 255, 0.075);
+      border-color: var(--border);
+    }
+
+    .mock-note-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .mock-note-sub {
+      font-size: 11px;
+      color: var(--subtle);
+    }
+
+    .mock-editor {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      padding: 18px 0;
+      font-family: "Cascadia Mono", "Consolas", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+
+    .mock-gutter {
+      text-align: right;
+      padding-right: 14px;
+      color: #4b5565;
+      user-select: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mock-lines {
+      padding: 0 20px;
+      color: #e5e9f0;
+      white-space: pre-wrap;
+    }
+
+    .mock-muted-line {
+      color: #8b97ab;
+    }
+
+    .mock-statusbar {
+      height: 30px;
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    /* Feature Grid */
+    .section-title {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      margin-bottom: 30px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 72px;
+    }
+
+    .card {
+      padding: 24px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      transition: border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.045);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .card-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .card p {
+      font-size: 13.8px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* Quick Start Strip */
+    .install-box {
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(25, 30, 40, 0.72) 0%, rgba(16, 19, 26, 0.85) 100%);
+      padding: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 72px;
+    }
+
+    .install-text h2 {
+      font-size: 22px;
+      font-weight: 650;
+      margin-bottom: 6px;
+      letter-spacing: -0.015em;
+    }
+
+    .install-text p {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 560px;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0 40px;
+      font-size: 13px;
+      color: var(--subtle);
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 18px;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      color: var(--text);
+    }
+
+    @media (max-width: 720px) {
+      .mock-body {
+        grid-template-columns: 1fr;
+      }
+      .mock-sidebar {
+        display: none;
+      }
+      .mock-tabs {
+        display: none;
+      }
+      .hero {
+        padding-top: 48px;
+      }
+      .install-box {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header>
+    <div class="container nav">
+      <a href="#" class="brand">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="gBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2e333d"/>
+              <stop offset="100%" stop-color="#12141a"/>
+            </linearGradient>
+          </defs>
+          <rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="url(#gBg)" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+          <path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/>
+        </svg>
+        <span>Graphite</span>
+        <span class="version-pill">v1.0.0</span>
+      </a>
+
+      <div class="nav-actions">
+        <a class="nav-link" href="https://github.com/FleetwayLOL/Graphite-Notes" target="_blank" rel="noopener" data-i18n="navRepo">GitHub</a>
+        <a class="nav-link" href="https://github.com/FleetwayLOL/Graphite-Notes/releases/latest" target="_blank" rel="noopener" data-i18n="navReleases">Релизы</a>
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button class="lang-btn active" id="btnRu" type="button">RU</button>
+          <button class="lang-btn" id="btnEn" type="button">EN</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span data-i18n="badge">Windows 10 / 11 · Portable · Open Source (MIT)</span>
+      </div>
+
+      <h1 data-i18n="heroTitle">Строгий и быстрый редактор текста и заметок</h1>
+      <p class="hero-sub" data-i18n="heroSub">
+        Портативное приложение для Windows на базе нативного окна Win32 и WebView2. Работает сразу из папки без установки, поддерживает вкладки, режимы окна «Блюр» и «Обычный», кастомные шрифты и кодировки.
+      </p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/FleetwayLOL/Graphite-Notes/releases/latest/download/Graphite-Portable-Windows.zip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span data-i18n="btnDownload">Скачать для Windows (.zip)</span>
+        </a>
+        <a class="btn btn-secondary" href="https://github.com/FleetwayLOL/Graphite-Notes" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          <span data-i18n="btnSource">Исходный код на GitHub</span>
+        </a>
+      </div>
+
+      <div class="hero-meta" data-i18n="heroMeta">
+        Graphite-Portable-Windows.zip · ~10.3 МБ · Без установщика и реестра по умолчанию
+      </div>
+
+      <!-- Interactive Window Preview -->
+      <div class="preview-stage">
+        <div class="stage-controls">
+          <span class="stage-label" data-i18n="stageLabel">Предпросмотр интерфейса окна</span>
+          <div class="mode-pills">
+            <button type="button" class="mode-pill active" id="modeBlur" data-i18n="modeBlur">Окно: Блюр</button>
+            <button type="button" class="mode-pill" id="modeSolid" data-i18n="modeSolid">Окно: Обычный</button>
+            <button type="button" class="mode-pill" id="modeCompact" data-i18n="modeCompact">Компактный вид</button>
+          </div>
+        </div>
+
+        <div class="mock-win" id="mockWin">
+          <div class="mock-titlebar">
+            <div class="mock-title-left">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <rect x="1.5" y="1.5" width="61" height="61" rx="11" fill="#1e222b" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2.5"/>
+                <path d="M48.59 19.12A21 21 0 1 0 52.93 30.34H31.49v6.78h12.78A13.3 13.3 0 1 1 42.51 23.85z" fill="#f8fafc"/>
+              </svg>
+              <span>Graphite</span>
+              <div class="mock-tabs">
+                <span class="mock-tab active">notes.txt</span>
+                <span class="mock-tab">todo.md</span>
+                <span class="mock-tab">config.ini</span>
+              </div>
+            </div>
+            <div class="mock-winctrls">
+              <span>&#8722;</span>
+              <span>&#9633;</span>
+              <span>&#215;</span>
+            </div>
+          </div>
+
+          <div class="mock-body">
+            <aside class="mock-sidebar">
+              <div class="mock-search" data-i18n="mockSearch">Поиск по заметкам...</div>
+              <div class="mock-note-item active">
+                <div class="mock-note-title">notes.txt</div>
+                <div class="mock-note-sub">UTF-8 · 18 строк</div>
+              </div>
+              <div class="mock-note-item">
+                <div class="mock-note-title">todo.md</div>
+                <div class="mock-note-sub">UTF-8 · План релиза</div>
+              </div>
+              <div class="mock-note-item">
+                <div class="mock-note-title">config.ini</div>
+                <div class="mock-note-sub">Windows-1251 · Системный</div>
+              </div>
+            </aside>
+
+            <div class="mock-editor">
+              <div class="mock-gutter">1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7</div>
+              <div class="mock-lines" id="mockEditorText"># Graphite v1.0.0
+
+Быстрый портативный блокнот и менеджер заметок.
+Все данные хранятся локально в папке PortableData рядом с Graphite.exe.
+
+- Открытие и сохранение .txt, .md, .log, .ini, .json
+- Поддержка UTF-8, UTF-8 BOM, UTF-16 и Windows-1251</div>
+            </div>
+          </div>
+
+          <div class="mock-statusbar">
+            <span data-i18n="statusReady">Готово · Автосохранение активно</span>
+            <span>Ln 7, Col 52 · UTF-8 · CRLF · 100%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title" data-i18n="featHeading">Основные возможности</h2>
+    <section class="features">
+      <article class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </div>
+        <h3 data-i18n="f1Title">Два режима окна и вида</h3>
+        <p data-i18n="f1Desc">Нативное размытие Windows («Блюр») или строгий матовый режим («Обычный»), а также переключение между полным списком заметок и чистым компактным блокнотом.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <h3 data-i18n="f2Title">Полная портативность</h3>
+        <p data-i18n="f2Desc">Не требует инсталлятора. Заметки, открытые вкладки, выбранные темы и загруженные шрифты сохраняются прямо рядом с программой в папке PortableData.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 7 4 4 20 4 20 7"/>
+            <line x1="9" y1="20" x2="15" y2="20"/>
+            <line x1="12" y1="4" x2="12" y2="20"/>
+          </svg>
+        </div>
+        <h3 data-i18n="f3Title">Шрифты и кодировки</h3>
+        <p data-i18n="f3Desc">Корректное чтение и сохранение UTF-8, UTF-16 и кириллической Windows-1251, плюс загрузка собственных файлов шрифтов .ttf, .otf, .woff и .woff2.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <h3 data-i18n="f4Title">15 языков интерфейса</h3>
+        <p data-i18n="f4Desc">Автоматическое определение языка самого интерфейса Windows при первом запуске (независимо от региона системы) и мгновенное переключение вручную.</p>
+      </article>
+    </section>
+
+    <section class="install-box">
+      <div class="install-text">
+        <h2 data-i18n="ctaBottomTitle">Готов к работе сразу после распаковки</h2>
+        <p data-i18n="ctaBottomDesc">Скачайте портативный архив из GitHub Releases, распакуйте в удобную папку и запустите Graphite.exe. Опционально в настройках можно в один клик создать ярлык на Рабочем столе или назначить программу для .txt файлов.</p>
+      </div>
+      <a class="btn btn-primary" href="https://github.com/FleetwayLOL/Graphite-Notes/releases/latest/download/Graphite-Portable-Windows.zip">
+        <span data-i18n="btnDownloadShort">Скачать Graphite v1.0.0</span>
+      </a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <span>MIT License · By FleetwayLOL and AI</span>
+      <div class="footer-links">
+        <a href="https://github.com/FleetwayLOL/Graphite-Notes" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="https://github.com/FleetwayLOL/Graphite-Notes/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/FleetwayLOL/Graphite-Notes/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var dict = {
+        ru: {
+          navRepo: "GitHub",
+          navReleases: "Релизы",
+          badge: "Windows 10 / 11 · Portable · Open Source (MIT)",
+          heroTitle: "Строгий и быстрый редактор текста и заметок",
+          heroSub: "Портативное приложение для Windows на базе нативного окна Win32 и WebView2. Работает сразу из папки без установки, поддерживает вкладки, режимы окна «Блюр» и «Обычный», кастомные шрифты и кодировки.",
+          btnDownload: "Скачать для Windows (.zip)",
+          btnSource: "Исходный код на GitHub",
+          heroMeta: "Graphite-Portable-Windows.zip · ~10.3 МБ · Без установщика и реестра по умолчанию",
+          stageLabel: "Предпросмотр интерфейса окна",
+          modeBlur: "Окно: Блюр",
+          modeSolid: "Окно: Обычный",
+          modeCompact: "Компактный вид",
+          mockSearch: "Поиск по заметкам...",
+          statusReady: "Готово · Автосохранение активно",
+          featHeading: "Основные возможности",
+          f1Title: "Два режима окна и вида",
+          f1Desc: "Нативное размытие Windows («Блюр») или строгий матовый режим («Обычный»), а также переключение между полным списком заметок и чистым компактным блокнотом.",
+          f2Title: "Полная портативность",
+          f2Desc: "Не требует инсталлятора. Заметки, открытые вкладки, выбранные темы и загруженные шрифты сохраняются прямо рядом с программой в папке PortableData.",
+          f3Title: "Шрифты и кодировки",
+          f3Desc: "Корректное чтение и сохранение UTF-8, UTF-16 и кириллической Windows-1251, плюс загрузка собственных файлов шрифтов .ttf, .otf, .woff и .woff2.",
+          f4Title: "15 языков интерфейса",
+          f4Desc: "Автоматическое определение языка самого интерфейса Windows при первом запуске (независимо от региона системы) и мгновенное переключение вручную.",
+          ctaBottomTitle: "Готов к работе сразу после распаковки",
+          ctaBottomDesc: "Скачайте портативный архив из GitHub Releases, распакуйте в удобную папку и запустите Graphite.exe. Опционально в настройках можно в один клик создать ярлык на Рабочем столе или назначить программу для .txt файлов.",
+          btnDownloadShort: "Скачать Graphite v1.0.0",
+          editorSample: "# Graphite v1.0.0\n\nБыстрый портативный блокнот и менеджер заметок.\nВсе данные хранятся локально в папке PortableData рядом с Graphite.exe.\n\n- Открытие и сохранение .txt, .md, .log, .ini, .json\n- Поддержка UTF-8, UTF-8 BOM, UTF-16 и Windows-1251"
+        },
+        en: {
+          navRepo: "GitHub",
+          navReleases: "Releases",
+          badge: "Windows 10 / 11 · Portable · Open Source (MIT)",
+          heroTitle: "Clean, fast portable text & note editor",
+          heroSub: "A native Win32 + WebView2 desktop editor for Windows. Runs straight from any folder with zero installation, featuring multi-tab editing, Blur & Solid window styles, custom fonts, and legacy encodings.",
+          btnDownload: "Download for Windows (.zip)",
+          btnSource: "Source Code on GitHub",
+          heroMeta: "Graphite-Portable-Windows.zip · ~10.3 MB · No installer required",
+          stageLabel: "Interactive window preview",
+          modeBlur: "Window: Blur",
+          modeSolid: "Window: Standard",
+          modeCompact: "Compact View",
+          mockSearch: "Search notes...",
+          statusReady: "Ready · Autosave active",
+          featHeading: "Core Capabilities",
+          f1Title: "Dual Window & View Modes",
+          f1Desc: "Switch between native Windows backdrop blur and a clean matte frame, or toggle between the full note manager and a distraction-free compact notepad.",
+          f2Title: "True Portable Storage",
+          f2Desc: "Zero installation. Notes, open tabs, selected themes, and uploaded font files are stored right next to Graphite.exe inside PortableData.",
+          f3Title: "Custom Fonts & Encodings",
+          f3Desc: "Read and save UTF-8, UTF-8 BOM, UTF-16, and Windows-1251 cleanly, and import your own .ttf, .otf, .woff, or .woff2 font files.",
+          f4Title: "15 Interface Languages",
+          f4Desc: "Automatically detects your Windows UI display language on first launch (independent of OS region) with instant manual switching.",
+          ctaBottomTitle: "Ready to run right out of the archive",
+          ctaBottomDesc: "Download the portable zip from GitHub Releases, extract anywhere, and launch Graphite.exe. Optional Desktop shortcut and .txt association are built right into Settings.",
+          btnDownloadShort: "Download Graphite v1.0.0",
+          editorSample: "# Graphite v1.0.0\n\nFast portable notepad and note organizer for Windows.\nAll data lives locally inside PortableData next to Graphite.exe.\n\n- Open & save .txt, .md, .log, .ini, .json\n- Full UTF-8, UTF-8 BOM, UTF-16, and Windows-1251 support"
+        }
+      };
+
+      var btnRu = document.getElementById("btnRu");
+      var btnEn = document.getElementById("btnEn");
+      var mockEditorText = document.getElementById("mockEditorText");
+
+      function setLang(lang) {
+        var t = dict[lang] || dict.ru;
+        document.documentElement.lang = lang;
+        btnRu.classList.toggle("active", lang === "ru");
+        btnEn.classList.toggle("active", lang === "en");
+        var nodes = document.querySelectorAll("[data-i18n]");
+        for (var i = 0; i < nodes.length; i++) {
+          var key = nodes[i].getAttribute("data-i18n");
+          if (t[key]) nodes[i].textContent = t[key];
+        }
+        mockEditorText.textContent = t.editorSample;
+      }
+
+      btnRu.addEventListener("click", function () { setLang("ru"); });
+      btnEn.addEventListener("click", function () { setLang("en"); });
+
+      var navLang = (navigator.language || "ru").toLowerCase();
+      if (navLang.indexOf("ru") !== 0 && navLang.indexOf("be") !== 0 && navLang.indexOf("kk") !== 0) {
+        setLang("en");
+      }
+
+      var mockWin = document.getElementById("mockWin");
+      var modeBlur = document.getElementById("modeBlur");
+      var modeSolid = document.getElementById("modeSolid");
+      var modeCompact = document.getElementById("modeCompact");
+
+      modeBlur.addEventListener("click", function () {
+        mockWin.classList.remove("solid-mode");
+        modeBlur.classList.add("active");
+        modeSolid.classList.remove("active");
+      });
+
+      modeSolid.addEventListener("click", function () {
+        mockWin.classList.add("solid-mode");
+        modeSolid.classList.add("active");
+        modeBlur.classList.remove("active");
+      });
+
+      modeCompact.addEventListener("click", function () {
+        var isCompact = mockWin.classList.toggle("compact-mode");
+        modeCompact.classList.toggle("active", isCompact);
+      });
+    })();
+  </script>
+</body>
+</html>
